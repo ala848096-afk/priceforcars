@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Price Explorer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #ff4d4d;
+            display: inline-block;
+            padding-bottom: 0.5rem;
+        }
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: #2a2a2a;
+            padding: 1rem;
+            border-radius: 12px;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: #aaa;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .tab-btn:hover {
+            background: #3a3a3a;
+            color: #fff;
+        }
+        .tab-btn.active {
+            background: #ff4d4d;
+            color: white;
+        }
+        .cars-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .car-card {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid #ff4d4d;
+            display: flex;
+            flex-direction: column;
+        }
+        .car-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+        }
+        .car-image {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background: #333;
+        }
+        .car-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+        .car-price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #ff4d4d;
+            margin-bottom: 0.75rem;
+        }
+        .car-desc {
+            color: #b0b0b0;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+        .no-cars {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            background: #2a2a2a;
+            border-radius: 12px;
+            color: #888;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🚗 Car Price Explorer</h1>
+
+    <div class="tabs" id="tabsContainer"></div>
+    <div class="cars-grid" id="carsContainer"></div>
+</div>
+
+<script>
+    (function() {
+        // ---------- данные машин с новыми luxury-фото ----------
+        const cars = [
+            { name: "Ford Fiesta", price: 8500, desc: "Compact, fuel-efficient, great for city driving.", 
+              imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/2018_Ford_Fiesta_SE_hatchback_in_Blue%2C_front_left2.jpg/1200px-2018_Ford_Fiesta_SE_hatchback_in_Blue%2C_front_left2.jpg", luxury: false },
+            { name: "Chevrolet Spark", price: 6200, desc: "Tiny hatchback, cheap to maintain.", 
+              imageUrl: "https://avatars.mds.yandex.net/get-autoru-vos/2177079/e243e162164914af962c18186dbeff28/1200x900", luxury: false },
+            { name: "Nissan Versa", price: 7400, desc: "Spacious interior, budget-friendly.", 
+              imageUrl: "https://avatars.mds.yandex.net/i?id=6a1ea83af7daa84fd1d98936f12fa849_l-5568204-images-thumbs&n=13", luxury: false },
+            { name: "Honda Civic 2008", price: 4800, desc: "Reliable, aftermarket parts everywhere.", 
+              imageUrl: "https://i.ytimg.com/vi/ERql5_EfkPc/maxresdefault.jpg", luxury: false },
+            { name: "Mazda MX-5 Miata", price: 9500, desc: "Convertible, rear-wheel drive, pure fun.", 
+              imageUrl: "https://i.ytimg.com/vi/Go1EGLisC-M/maxresdefault.jpg", luxury: false },
+            { name: "BMW 3 Series 2005", price: 3500, desc: "Luxury feel, high mileage example.", 
+              imageUrl: "https://a.d-cd.net/53ccdc8s-960.jpg", luxury: false },
+            { name: "Subaru Impreza WRX", price: 8800, desc: "Turbo AWD, tuner favorite.", 
+              imageUrl: "https://avatars.mds.yandex.net/get-autoru-vos/2170045/7bff879eff25ad9b2c5f3767301ba67c/584x438", luxury: false },
+            { name: "Porsche Boxster 986", price: 9900, desc: "Mid-engine roadster, affordable Porsche.", 
+              imageUrl: "https://avatars.mds.yandex.net/get-autoru-vos/2134518/6d2537a86aaac4f41c851e7d6ab98047/1200x900", luxury: false },
+            { name: "Mercedes-Benz C230", price: 4200, desc: "Kompressor, decent power.", 
+              imageUrl: "https://i.ytimg.com/vi/zODEygi9ujo/maxresdefault.jpg", luxury: false },
+            { name: "Volkswagen Golf GTI", price: 7600, desc: "Hot hatch, practical and quick.", 
+              imageUrl: "https://avatars.mds.yandex.net/i?id=6b3d516788d54b609be64a7cd23f31f9_l-8318113-images-thumbs&n=13", luxury: false },
+            { name: "Audi A4 Quattro", price: 5100, desc: "All-wheel drive, solid interior.", 
+              imageUrl: "https://i.ytimg.com/vi/udiEHNKYdH4/maxresdefault.jpg", luxury: false },
+            { name: "Lexus LS 400", price: 3900, desc: "V8 luxury, bulletproof engine.", 
+              imageUrl: "https://a.d-cd.net/e3b954u-960.jpg", luxury: true },
+            { name: "Toyota Camry 2002", price: 2700, desc: "Boring but indestructible.", 
+              imageUrl: "https://kolesa-photos.kcdn.online/webp/8a/8aa55c3d-e611-48a9-b29a-9ecbbef40c09/1-full.webp", luxury: false },
+            { name: "Honda Accord 2003", price: 2900, desc: "Reliable sedan, cheap parts.", 
+              imageUrl: "https://avatars.mds.yandex.net/get-autoru-vos/6214220/8319a5e5e25f0468472975174a8d3e6b/1200x900", luxury: false },
+            { name: "Chevrolet Corvette C5", price: 11000, desc: "V8 power, fiberglass body.", 
+              imageUrl: "", luxury: false },
+            // ----- luxury models with new images -----
+            { name: "Dodge Viper RT/10", price: 35000, desc: "V10 monster, raw experience.", 
+              imageUrl: "https://avatars.mds.yandex.net/i?id=fc93d1d56b6ee95c7f1554b923a9377231ee076d-5234598-images-thumbs&n=13", luxury: true },
+            { name: "Ferrari 348", price: 55000, desc: "Italian exotic, V8 scream.", 
+              imageUrl: "https://avatars.mds.yandex.net/i?id=8fac6a24d267555bb634c8cbc38cab328a4006d6-10107139-images-thumbs&n=13", luxury: true },
+            { name: "Lamborghini Gallardo", price: 89000, desc: "AWD V10, modern classic.", 
+              imageUrl: "https://avatars.mds.yandex.net/i?id=6ea47b3c70c9ee9bbaf8f0d835ff602b756fb951-5873737-images-thumbs&n=13", luxury: true },
+            { name: "BMW M4 Competition", price: 75000, desc: "High-performance luxury coupe.", 
+              imageUrl: "https://avatars.mds.yandex.net/get-autoru-vos/6014934/eec8e30fed3728efb2c85c4d1dd57f53/1200x900", luxury: true }
+        ];
+
+        // ---------- конфигурация вкладок ----------
+        const tabs = [
+            { type: 'price', min: 0, max: 100, label: "Under $100" },
+            { type: 'price', min: 100, max: 500, label: "$100 – $500" },
+            { type: 'price', min: 500, max: 1000, label: "$500 – $1000" },
+            { type: 'price', min: 1000, max: 5000, label: "$1000 – $5000" },
+            { type: 'price', min: 5000, max: 10000, label: "$5000 – $10000" },
+            { type: 'luxury', label: "Luxury Cars" }
+        ];
+
+        function filterCars(tab) {
+            if (tab.type === 'luxury') {
+                return cars.filter(car => car.luxury === true);
+            } else {
+                return cars.filter(car => car.price >= tab.min && car.price <= tab.max);
+            }
+        }
+
+        function renderCars(tab) {
+            const container = document.getElementById('carsContainer');
+            const filtered = filterCars(tab);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="no-cars">No cars in this category.</div>`;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach((car, idx) => {
+                const imageUrl = car.imageUrl && car.imageUrl.trim() !== '' 
+                    ? car.imageUrl 
+                    : `https://source.unsplash.com/featured/300x200/?car&sig=${encodeURIComponent(car.name + idx)}`;
+                    
+                html += `
+                    <div class="car-card">
+                        <img class="car-image" 
+                             src="${imageUrl}" 
+                             alt="${car.name}" 
+                             loading="lazy"
+                             onerror="this.onerror=null; this.src='https://source.unsplash.com/featured/300x200/?car&sig=fallback${idx}'">
+                        <div class="car-name">${car.name}</div>
+                        <div class="car-price">$${car.price.toLocaleString()}</div>
+                        <div class="car-desc">${car.desc}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function initTabs() {
+            const tabsContainer = document.getElementById('tabsContainer');
+            let buttonsHtml = '';
+            tabs.forEach((tab, index) => {
+                buttonsHtml += `<button class="tab-btn ${index === 0 ? 'active' : ''}" data-index="${index}">${tab.label}</button>`;
+            });
+            tabsContainer.innerHTML = buttonsHtml;
+
+            tabsContainer.addEventListener('click', (e) => {
+                const btn = e.target.closest('.tab-btn');
+                if (!btn) return;
+
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const index = btn.getAttribute('data-index');
+                renderCars(tabs[index]);
+            });
+
+            if (tabs.length > 0) {
+                renderCars(tabs[0]);
+            }
+        }
+
+        initTabs();
+    })();
+</script>
+</body>
+</html>
